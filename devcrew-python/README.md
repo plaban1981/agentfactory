@@ -1,8 +1,6 @@
 # DevCrew Python
 
-A faithful Python port of the **DevCrew** AI software team from the YouTube
-course *"Build an AI Agent Company Using Claude Code & Next.js"* (source:
-`devcrew-yt-project`, Next.js + TypeScript + OpenAI Responses API).
+A faithful Python port of the **DevCrew** AI software team .
 
 This port keeps the original product logic stage for stage, but runs the team
 on **LangChain Deep Agents** (`deepagents` 0.7.32) with **OpenRouter** as the
