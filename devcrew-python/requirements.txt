@@ -1,0 +1,8 @@
+# Pinned versions verified together on Python 3.12 (Windows).
+deepagents==0.7.32
+langchain==1.4.7
+langchain-core==1.7.3
+langchain-openai==1.7.2
+langgraph==1.2.16
+python-dotenv==1.2.4
+pydantic>=2.0

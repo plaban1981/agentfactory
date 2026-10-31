@@ -1,0 +1,824 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DevCrew Python — Agent Factory Tutorial</title>
+<style>
+:root{
+  --bg:#f6f7fb; --surface:#ffffff; --surface2:#eef0f7; --ink:#14172b; --muted:#5a6182; --line:#d9dcea;
+  --indigo:#4f46e5; --indigo-bg:#e8e7fd;
+  --teal:#0d9488;   --teal-bg:#d9f3ef;
+  --amber:#d97706;  --amber-bg:#fdecd0;
+  --rose:#e11d48;   --rose-bg:#fde0e7;
+  --slate:#475569;  --slate-bg:#e5e9f0;
+  --code-bg:#12142a; --code-ink:#dfe3ff;
+  --shadow:0 1px 2px rgba(20,23,43,.06),0 8px 28px rgba(20,23,43,.07);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0c0e1d; --surface:#151833; --surface2:#1c2042; --ink:#e9ebff; --muted:#9aa1c9; --line:#2a2f5a;
+    --indigo:#8b85ff; --indigo-bg:#25236b;
+    --teal:#2dd4bf;   --teal-bg:#0f3a3a;
+    --amber:#fbbf24;  --amber-bg:#46330d;
+    --rose:#fb7185;   --rose-bg:#4a1626;
+    --slate:#94a3b8;  --slate-bg:#222a40;
+    --code-bg:#080a18; --code-ink:#dfe3ff;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 28px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c0e1d; --surface:#151833; --surface2:#1c2042; --ink:#e9ebff; --muted:#9aa1c9; --line:#2a2f5a;
+  --indigo:#8b85ff; --indigo-bg:#25236b; --teal:#2dd4bf; --teal-bg:#0f3a3a; --amber:#fbbf24; --amber-bg:#46330d;
+  --rose:#fb7185; --rose-bg:#4a1626; --slate:#94a3b8; --slate-bg:#222a40; --code-bg:#080a18; --code-ink:#dfe3ff;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 28px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif}
+code,pre,.mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+code{font-size:.86em;background:var(--surface2);padding:.1em .4em;border-radius:5px}
+a{color:var(--indigo)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+
+/* hero */
+.hero{background:linear-gradient(135deg,#1e1b6b 0%,#312e9c 45%,#0d9488 130%);color:#fff;padding:64px 0 90px;position:relative;overflow:hidden}
+.hero:after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 85% 20%,rgba(255,255,255,.18),transparent 45%);pointer-events:none}
+.hero h1{font-size:clamp(2rem,5vw,3.4rem);line-height:1.1;margin:.3em 0 .4em;letter-spacing:-.02em}
+.hero p.lead{max-width:760px;font-size:1.15rem;opacity:.92}
+.eyebrow{font-size:.78rem;letter-spacing:.16em;text-transform:uppercase;opacity:.8;font-weight:600}
+.pills{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.pill{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);padding:6px 14px;border-radius:99px;font-size:.88rem;backdrop-filter:blur(4px)}
+.theme-btn{position:absolute;right:20px;top:18px;z-index:2;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:6px 12px;cursor:pointer;font:inherit;font-size:.85rem}
+
+/* nav */
+nav.toc{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+nav.toc .wrap{display:flex;gap:4px;overflow-x:auto;padding-top:8px;padding-bottom:8px}
+nav.toc a{white-space:nowrap;text-decoration:none;color:var(--muted);padding:6px 12px;border-radius:8px;font-size:.88rem;font-weight:500}
+nav.toc a:hover{background:var(--surface2);color:var(--ink)}
+
+section{padding:54px 0 8px}
+section>.wrap>h2{font-size:1.75rem;margin:0 0 6px;letter-spacing:-.01em}
+.sub{color:var(--muted);max-width:760px;margin:0 0 26px}
+.num{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:10px;background:var(--indigo);color:#fff;font-size:1rem;margin-right:10px;vertical-align:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:22px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+
+/* diagram */
+.diagram{padding:12px;overflow-x:auto}
+.diagram svg{display:block;min-width:900px;width:100%;height:auto}
+svg text{font-family:-apple-system,"Segoe UI",Inter,sans-serif;fill:var(--ink)}
+svg .t-sm{font-size:11.5px;fill:var(--muted)}
+svg .t-md{font-size:13.5px;font-weight:600}
+svg .t-lg{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+svg .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.n-indigo{fill:var(--indigo-bg);stroke:var(--indigo)} .n-teal{fill:var(--teal-bg);stroke:var(--teal)}
+.n-amber{fill:var(--amber-bg);stroke:var(--amber)} .n-rose{fill:var(--rose-bg);stroke:var(--rose)}
+.n-slate{fill:var(--slate-bg);stroke:var(--slate)}
+.node{stroke-width:1.6}
+.zone{fill:none;stroke:var(--line);stroke-width:1.6;stroke-dasharray:7 6}
+.edge{stroke:var(--muted);stroke-width:1.8;fill:none}
+.edge.dash{stroke-dasharray:5 5}
+.edge.ind{stroke:var(--indigo)} .edge.tea{stroke:var(--teal)} .edge.amb{stroke:var(--amber)}
+.badge circle{fill:var(--ink)} .badge text{fill:var(--bg);font-size:11px;font-weight:700;text-anchor:middle}
+.flow{stroke-dasharray:6 8;animation:dash 1.1s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-14}}
+@media (prefers-reduced-motion:reduce){.flow{animation:none}}
+
+.legend{display:flex;flex-wrap:wrap;gap:16px;margin:14px 6px 4px;font-size:.85rem;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:4px;margin-right:6px;vertical-align:-1px;border:1.6px solid}
+
+/* table */
+.tbl{width:100%;border-collapse:collapse;font-size:.92rem}
+.tbl th{text-align:left;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:10px 12px;border-bottom:2px solid var(--line)}
+.tbl td{padding:12px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl tr:last-child td{border-bottom:0}
+.tag{display:inline-block;font-size:.72rem;font-weight:700;padding:2px 9px;border-radius:99px;margin-right:4px}
+.t-ind{background:var(--indigo-bg);color:var(--indigo)} .t-tea{background:var(--teal-bg);color:var(--teal)}
+.t-amb{background:var(--amber-bg);color:var(--amber)} .t-ros{background:var(--rose-bg);color:var(--rose)}
+.t-sla{background:var(--slate-bg);color:var(--slate)}
+.scroll{overflow-x:auto}
+
+/* stepper */
+.stepper{display:grid;grid-template-columns:minmax(220px,300px) 1fr;gap:18px}
+@media(max-width:820px){.stepper{grid-template-columns:1fr}}
+.steps{display:flex;flex-direction:column;gap:8px}
+.step{display:flex;gap:12px;align-items:center;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;color:var(--ink);font:inherit;transition:.15s}
+.step:hover{border-color:var(--indigo)}
+.step .k{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-weight:700;font-size:.85rem;background:var(--surface2);color:var(--muted)}
+.step small{display:block;color:var(--muted);font-size:.78rem}
+.step[aria-selected="true"]{border-color:var(--indigo);background:var(--indigo-bg);box-shadow:var(--shadow)}
+.step[aria-selected="true"] .k{background:var(--indigo);color:#fff}
+.panel{display:none}.panel.on{display:block;animation:fade .25s}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1}}
+.panel h3{margin:0 0 4px;font-size:1.25rem}
+.panel ul{padding-left:20px;margin:10px 0}
+.panel li{margin:5px 0}
+.kv{display:grid;grid-template-columns:110px 1fr;gap:6px 12px;font-size:.9rem;margin:14px 0 0;padding-top:14px;border-top:1px dashed var(--line)}
+.kv dt{color:var(--muted);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;padding-top:2px}
+.kv dd{margin:0}
+
+/* timeline */
+.timeline{position:relative;margin:0;padding:0;list-style:none}
+.timeline:before{content:"";position:absolute;left:19px;top:6px;bottom:6px;width:2px;background:var(--line)}
+.timeline li{position:relative;padding:0 0 22px 56px}
+.timeline li:last-child{padding-bottom:0}
+.timeline .dot{position:absolute;left:0;top:0;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-weight:700;color:#fff;font-size:.9rem;box-shadow:var(--shadow)}
+.timeline h4{margin:0 0 2px;font-size:1.02rem}
+.timeline p{margin:0;color:var(--muted);font-size:.93rem}
+.who{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.d-ind{background:var(--indigo)}.d-tea{background:var(--teal)}.d-amb{background:var(--amber)}.d-ros{background:var(--rose)}.d-sla{background:var(--slate)}
+
+/* gate */
+.gate{display:grid;gap:10px}
+.chk{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.chk b{display:block}
+.chk .ic{flex:none;width:28px;height:28px;border-radius:8px;background:var(--rose-bg);color:var(--rose);display:grid;place-items:center;font-weight:800}
+.chk span.d{color:var(--muted);font-size:.9rem}
+
+/* code */
+.code{position:relative;background:var(--code-bg);color:var(--code-ink);border-radius:12px;margin:12px 0}
+.code pre{margin:0;padding:16px 18px;overflow-x:auto;font-size:.85rem;line-height:1.65}
+.code .cap{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid rgba(255,255,255,.1);font-size:.75rem;color:#9aa1c9;letter-spacing:.05em;text-transform:uppercase}
+.copy{background:rgba(255,255,255,.1);color:#dfe3ff;border:1px solid rgba(255,255,255,.18);border-radius:6px;padding:3px 10px;cursor:pointer;font:inherit;font-size:.72rem}
+.copy:hover{background:rgba(255,255,255,.2)}
+.c-cm{color:#7f87b8}.c-k{color:#a5b4fc}.c-s{color:#6ee7b7}
+
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tab{background:var(--surface);border:1px solid var(--line);color:var(--ink);padding:8px 16px;border-radius:10px;cursor:pointer;font:inherit;font-weight:600;font-size:.9rem}
+.tab[aria-selected="true"]{background:var(--indigo);border-color:var(--indigo);color:#fff}
+.tabpanel{display:none}.tabpanel.on{display:block}
+
+.callout{border-left:4px solid var(--amber);background:var(--amber-bg);padding:12px 16px;border-radius:0 12px 12px 0;margin:16px 0;font-size:.93rem}
+.callout.ok{border-color:var(--teal);background:var(--teal-bg)}
+.callout.bad{border-color:var(--rose);background:var(--rose-bg)}
+.callout b{display:block;margin-bottom:2px}
+
+.ol{counter-reset:s;list-style:none;padding:0;margin:0}
+.ol li{counter-increment:s;padding:10px 0 10px 44px;position:relative;border-bottom:1px solid var(--line)}
+.ol li:last-child{border:0}
+.ol li:before{content:counter(s);position:absolute;left:0;top:9px;width:28px;height:28px;border-radius:8px;background:var(--indigo-bg);color:var(--indigo);display:grid;place-items:center;font-weight:700;font-size:.85rem}
+
+footer{padding:48px 0 60px;color:var(--muted);font-size:.88rem;text-align:center}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <button class="theme-btn" id="themeBtn" aria-label="Toggle theme">◐ Theme</button>
+  <div class="wrap">
+    <div class="eyebrow">DevCrew Python · Agent Factory — Concepts, Architecture &amp; Runbook</div>
+    <h1>From a one-line task to a merged,<br>budgeted, audited pull request.</h1>
+    <p class="lead">A Python port of the DevCrew AI dev-team: four role agents built on LangChain Deep Agents take a task through analysis, development, review and testing. Per-stage budgets, a six-check trust scan, protected repo paths and a rework gate keep the team governable — and every event lands in an append-only ledger.</p>
+    <div class="pills">
+      <span class="pill">LangChain Deep Agents 0.7.32</span>
+      <span class="pill">OpenRouter · claude-sonnet-5.5</span>
+      <span class="pill">FastAPI + WebSocket control room</span>
+      <span class="pill">Local git repository backend</span>
+      <span class="pill">32 offline tests, zero network</span>
+    </div>
+  </div>
+</header>
+
+<nav class="toc"><div class="wrap">
+  <a href="#problem">Problem</a><a href="#map">System map</a><a href="#components">Components</a><a href="#execution">Execution</a><a href="#stages">Six stages</a>
+  <a href="#guardrails">Guard rails</a><a href="#ui">Control room</a><a href="#start">Run it</a><a href="#response">What it answers</a><a href="#failure">Failure modes</a>
+</div></nav>
+
+<!-- ================= PROBLEM ================= -->
+<section id="problem"><div class="wrap">
+  <h2><span class="num">1</span>Problem statement</h2>
+  <p class="sub">Why a single autonomous coding agent is not enough — and what an <em>agent factory</em> adds.</p>
+
+  <div class="grid g2">
+    <div class="card">
+      <h3 style="margin-top:0">The naive approach</h3>
+      <p style="margin:8px 0 0">Point one model at a ticket and let it edit <code>main</code>. It works in a demo — then reality bites: no one reviews the diff, a runaway loop bills your card overnight, a prompt hidden in an issue hijacks the session, and there is no record of who (or what) changed what, when, or why.</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">The factory approach</h3>
+      <p style="margin:8px 0 0">Split the work across <strong>specialised roles</strong> (Analyst → Developer → Reviewer → Tester), run each role inside a <strong>bounded loop</strong> (turn limits, per-agent monthly budgets), require a <strong>structured submission</strong> per stage (submission is not completion), enforce <strong>mechanical checks</strong> a model can't talk its way around, and write <strong>every spend and transition to a ledger</strong>.</p>
+    </div>
+  </div>
+
+  <div class="grid g3" style="margin-top:16px">
+    <div class="card"><span class="tag t-amb">Use case 1 · Demo &amp; teaching</span><p class="sub" style="margin:8px 0 0"><code>--mode offline</code> runs the full pipeline on a deterministic scripted model — no API key, no network, no cost. Every stage, gate and ledger entry is exercised exactly as in live mode.</p></div>
+    <div class="card"><span class="tag t-tea">Use case 2 · Real development assistance</span><p class="sub" style="margin:8px 0 0"><code>--mode live</code> swaps in <code>anthropic/claude-sonnet-5.5</code> via OpenRouter. The same guards apply: budgets, protected paths, rework rounds, manual or auto merge.</p></div>
+    <div class="card"><span class="tag t-ros">Use case 3 · Governance evaluation</span><p class="sub" style="margin:8px 0 0">The trust scan, budget ledger and failure-mode tests make the repo a testbed for "how do we keep autonomous agents inside the lines?" — the question an agent factory answers.</p></div>
+  </div>
+
+  <div class="callout"><b>What this port is — and isn't</b>It is a faithful logic port of the DevCrew TypeScript app (<code>lib/task-runs.ts</code>, <code>agent-tools.ts</code>, <code>agent-defaults.ts</code>, <code>agent-budget.ts</code>) to Python with Deep Agents. It is not the Cloudhike/Next.js deployment: jobs run inline in one process (the original's own dev fallback) and the repository backend is a local git checkout with the same rules, not the GitHub API.</div>
+</div></section>
+
+<!-- ================= MAP ================= -->
+<section id="map"><div class="wrap">
+  <h2><span class="num">2</span>System map</h2>
+  <p class="sub">Three trust zones. The control plane only holds a UI session and fans out events; all state lives in the in-process store, the local git repo and the JSONL ledger.</p>
+
+  <div class="card diagram">
+  <svg viewBox="0 0 1240 520" role="img" aria-label="Architecture diagram of browser, FastAPI control room, pipeline, Deep Agents, models, repo and ledger">
+    <defs>
+      <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker>
+      <marker id="ahi" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--indigo)"/></marker>
+      <marker id="aht" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--teal)"/></marker>
+      <marker id="aha" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--amber)"/></marker>
+    </defs>
+
+    <!-- zones -->
+    <rect class="zone" x="250" y="60" width="300" height="420" rx="18"/>
+    <text class="t-lg" x="268" y="86" style="fill:var(--indigo)">Control plane (FastAPI)</text>
+    <rect class="zone" x="590" y="30" width="620" height="450" rx="18"/>
+    <text class="t-lg" x="608" y="56" style="fill:var(--teal)">In-process agent factory</text>
+
+    <!-- browser -->
+    <rect class="node n-slate" x="30" y="195" width="180" height="140" rx="14"/>
+    <text class="t-md" x="48" y="224">Operator browser</text>
+    <text class="t-sm mono" x="48" y="246">devcrew/ui/static/index.html</text>
+    <text class="t-sm" x="48" y="272">control room SPA</text>
+    <text class="t-sm" x="48" y="288">board · stage chips</text>
+    <text class="t-sm" x="48" y="304">live event feed</text>
+
+    <!-- fastapi -->
+    <rect class="node n-indigo" x="270" y="105" width="260" height="225" rx="14"/>
+    <text class="t-md" x="288" y="132">devcrew/ui/app.py</text>
+    <text class="t-sm mono" x="288" y="158">GET  /api/state</text>
+    <text class="t-sm mono" x="288" y="176">POST /api/tasks · /api/run</text>
+    <text class="t-sm mono" x="288" y="194">POST /api/reset</text>
+    <text class="t-sm mono" x="288" y="212">WS   /ws</text>
+    <text class="t-sm" x="288" y="240">Broker: thread-safe fan-out</text>
+    <text class="t-sm" x="288" y="256">of pipeline event_sink msgs</text>
+    <text class="t-sm" x="288" y="284">UISession: one demo workspace,</text>
+    <text class="t-sm" x="288" y="300">one run at a time (Lock),</text>
+    <text class="t-sm" x="288" y="316">worker thread per run</text>
+
+    <rect class="node n-slate" x="270" y="355" width="260" height="100" rx="14"/>
+    <text class="t-md" x="288" y="382">Static files</text>
+    <text class="t-sm mono" x="288" y="402">StaticFiles mounted at /</text>
+    <text class="t-sm" x="288" y="420">vanilla JS, no build step</text>
+
+    <!-- pipeline -->
+    <rect class="node n-indigo" x="610" y="85" width="180" height="240" rx="14"/>
+    <text class="t-md" x="628" y="112">pipeline.py</text>
+    <text class="t-sm" x="628" y="132">stage machine</text>
+    <text class="t-sm mono" x="628" y="160">① analysis</text>
+    <text class="t-sm mono" x="628" y="182">② development</text>
+    <text class="t-sm mono" x="628" y="204">③ review ⇄ rework</text>
+    <text class="t-sm mono" x="628" y="226">④ testing + 6 branch</text>
+    <text class="t-sm mono" x="652" y="242">checks</text>
+    <text class="t-sm mono" x="628" y="264">⑤ pull_request</text>
+    <text class="t-sm mono" x="628" y="286">⑥ merge (auto|manual)</text>
+    <text class="t-sm" x="628" y="312">drive_run() loop, stage</text>
+    <text class="t-sm" x="652" y="328">validators, rework gate</text>
+
+    <!-- repo -->
+    <rect class="node n-teal" x="610" y="355" width="180" height="100" rx="12"/>
+    <text class="t-md" x="626" y="382">LocalRepo (repo.py)</text>
+    <text class="t-sm" x="626" y="402">local git checkout</text>
+    <text class="t-sm" x="626" y="418">protected paths refused</text>
+    <text class="t-sm mono" x="626" y="436">feat/&lt;key&gt;-&lt;slug&gt;</text>
+
+    <!-- deep agents -->
+    <rect class="node n-amber" x="830" y="85" width="180" height="190" rx="14"/>
+    <text class="t-md" x="848" y="112">agents.py</text>
+    <text class="t-sm" x="848" y="132">Deep Agents wiring</text>
+    <text class="t-sm mono" x="848" y="158">create_deep_agent()</text>
+    <text class="t-sm mono" x="848" y="176">BudgetMiddleware</text>
+    <text class="t-sm mono" x="848" y="194">ModelCallLimitMiddleware</text>
+    <text class="t-sm mono" x="848" y="212">TodoListMiddleware</text>
+    <text class="t-sm mono" x="848" y="230">CostTracker (usage $)</text>
+    <text class="t-sm" x="848" y="256">tools.py: 5 repo tools +</text>
+    <text class="t-sm" x="852" y="272">one hand_in() per stage;</text>
+    <text class="t-sm" x="852" y="288">SubmissionBox = 1 shot</text>
+
+    <!-- models -->
+    <rect class="node n-amber" x="1070" y="85" width="125" height="190" rx="12"/>
+    <text class="t-md" x="1086" y="112">Models</text>
+    <text class="t-sm" x="1086" y="140">offline:</text>
+    <text class="t-sm mono" x="1086" y="158">ScriptedChatModel</text>
+    <text class="t-sm" x="1086" y="174">deterministic steps</text>
+    <text class="t-sm" x="1086" y="202">live:</text>
+    <text class="t-sm mono" x="1086" y="220">claude-sonnet-5.5</text>
+    <text class="t-sm" x="1086" y="236">via OpenRouter</text>
+    <text class="t-sm" x="1086" y="252">usage → cost cents</text>
+
+    <!-- ledger -->
+    <rect class="node n-teal" x="830" y="355" width="365" height="100" rx="12"/>
+    <text class="t-md" x="848" y="382">Store + activity ledger (state.py)</text>
+    <text class="t-sm" x="848" y="402">tasks · runs · PRs · agents with monthly spend</text>
+    <text class="t-sm mono" x="848" y="420">activity.jsonl — append-only JSONL, every</text>
+    <text class="t-sm mono" x="866" y="436">stage start, review, test_run, PR, spend</text>
+
+    <!-- edges -->
+    <path class="edge ind flow" d="M210 250C235 250 245 235 270 225" marker-end="url(#ahi)"/>
+    <path class="edge ind flow" d="M530 200C565 200 575 190 610 185" marker-end="url(#ahi)"/>
+    <path class="edge amb flow" d="M790 150C810 150 810 150 830 150" marker-end="url(#aha)"/>
+    <path class="edge amb flow" d="M1010 150C1040 150 1045 170 1070 180" marker-end="url(#aha)"/>
+    <path class="edge tea" d="M700 325V355" marker-end="url(#aht)"/>
+    <path class="edge tea flow" d="M790 400H830" marker-end="url(#aht)"/>
+    <!-- events back to browser -->
+    <path class="edge dash" d="M270 300C240 300 230 290 210 275" marker-end="url(#ah)"/>
+
+    <!-- badges -->
+    <g class="badge"><circle cx="238" cy="252" r="10"/><text x="238" y="256">1</text></g>
+    <g class="badge"><circle cx="568" cy="192" r="10"/><text x="568" y="196">2</text></g>
+    <g class="badge"><circle cx="808" cy="150" r="10"/><text x="808" y="154">3</text></g>
+    <g class="badge"><circle cx="1040" cy="175" r="10"/><text x="1040" y="179">4</text></g>
+    <g class="badge"><circle cx="808" cy="400" r="10"/><text x="808" y="404">5</text></g>
+    <text class="t-sm" x="216" y="330">WS events: snapshot + run_started /</text>
+    <text class="t-sm" x="216" y="346">stage / agent_start / pr_opened / …</text>
+  </svg>
+  <div class="legend">
+    <span><i style="background:var(--indigo-bg);border-color:var(--indigo)"></i>Control plane</span>
+    <span><i style="background:var(--teal-bg);border-color:var(--teal)"></i>State &amp; repo of record</span>
+    <span><i style="background:var(--amber-bg);border-color:var(--amber)"></i>Model-calling components</span>
+    <span>Animated lines = call flow · dashed = events / evidence</span>
+  </div>
+  </div>
+
+  <div class="grid g3" style="margin-top:16px">
+    <div class="card"><b>① Browser ↔ API</b><p class="sub" style="margin:6px 0 0">The SPA fetches <code>/api/state</code> and opens a WebSocket for live events. Runs are started with <code>POST /api/run</code>; the server answers immediately and streams progress.</p></div>
+    <div class="card"><b>②③④ Pipeline → Deep Agents → model</b><p class="sub" style="margin:6px 0 0">Each agent stage is a <code>create_deep_agent</code> graph: system prompt + repo tools + one <code>hand_in()</code> tool, wrapped by budget and turn-limit middleware.</p></div>
+    <div class="card"><b>⑤ Ledger</b><p class="sub" style="margin:6px 0 0">Stage starts, reviews, test runs, PRs and per-stage spend are appended to <code>activity.jsonl</code> — the audit trail the UI's ledger table reads.</p></div>
+  </div>
+</div></section>
+
+<!-- ================= COMPONENTS ================= -->
+<section id="components"><div class="wrap">
+  <h2><span class="num">3</span>Component inventory</h2>
+  <p class="sub">Every module, its original TypeScript source, and who calls it.</p>
+  <div class="card scroll">
+  <table class="tbl">
+    <tr><th>Component</th><th>Python module</th><th>Ported from</th><th>Role</th></tr>
+    <tr><td><b>Workflow vocabulary</b></td><td><code>devcrew/config.py</code></td><td><code>lib/workflow.ts</code>, <code>lib/ai-team.ts</code></td><td>Stages, stage labels, role→stage map, budgets, turn limits, <code>MAX_REWORK_ROUNDS=2</code>, board statuses.</td></tr>
+    <tr><td><b>Default team</b></td><td><code>devcrew/team.py</code></td><td><code>lib/agent-defaults.ts</code></td><td>Verbatim role instructions + shared guardrails (prompt-injection, secrets, approvals), skills, budgets ($50–$200/mo), max turns 15–60.</td></tr>
+    <tr><td><b>State store</b></td><td><code>devcrew/state.py</code></td><td><code>lib/agents.ts</code>, task-run types</td><td>In-memory tasks/runs/PRs/agents, task keys (<code>DC-1</code>), monthly spend, JSONL ledger dump.</td></tr>
+    <tr><td><b>Budget engine</b></td><td><code>devcrew/budget.py</code></td><td><code>lib/agent-budget.ts</code></td><td><code>record_agent_spend</code>, 80% warning, hard stop at cap, 25¢ minimum balance to start a run.</td></tr>
+    <tr><td><b>Trust scan</b></td><td><code>devcrew/trust.py</code></td><td>built-in <code>runTrustChecks</code></td><td>Six weighted checks (role clarity 20, injection guardrail 20, secrets 15, high-impact approval 20, budget cap 10, skills match 15) scored /100.</td></tr>
+    <tr><td><b>Repo backend</b></td><td><code>devcrew/repo.py</code></td><td><code>lib/github-repo.ts</code></td><td>Local git with the same contract: branch create, one commit per write, <code>compare_branches</code>, protected paths (<code>.env*</code>, <code>.github/workflows</code>), merge with conflict → error.</td></tr>
+    <tr><td><b>Stage tools</b></td><td><code>devcrew/tools.py</code></td><td><code>lib/agent-tools.ts</code></td><td><code>list_files/read_file/write_file/delete_file/get_diff</code> + per-stage <code>hand_in()</code>; <code>SubmissionBox</code> accepts exactly one outcome; parsers raise back into the agent loop.</td></tr>
+    <tr><td><b>LLM client</b></td><td><code>devcrew/llm.py</code></td><td><code>lib/openai.ts</code></td><td>OpenRouter chat with usage → cost via configurable token prices; <code>openrouter_configured()</code> guard.</td></tr>
+    <tr><td><b>Deep Agents wiring</b></td><td><code>devcrew/agents.py</code></td><td>the original's Vercel AI loop</td><td><code>build_stage_agent</code>: <code>create_deep_agent</code> + BudgetMiddleware + ModelCallLimitMiddleware + TodoListMiddleware + CostTracker.</td></tr>
+    <tr><td><b>Stage machine</b></td><td><code>devcrew/pipeline.py</code></td><td><code>lib/task-runs.ts</code></td><td><code>start_task_run → drive_run</code>; stage input composition, validators, rework rounds, six branch checks, PR + merge, follow-up task on conflict.</td></tr>
+    <tr><td><b>Scripted model</b></td><td><code>devcrew/stub.py</code></td><td>— (test harness)</td><td><code>ScriptedChatModel</code>: deterministic tool-call scripts, usage metadata so CostTracker works offline.</td></tr>
+    <tr><td><b>Workspace factory</b></td><td><code>devcrew/factory.py</code></td><td>seed/sample workspace</td><td>Creates the sample repo (idempotent: never double-commits on reseed) and <code>add_task</code>.</td></tr>
+    <tr><td><b>Demo / CLI</b></td><td><code>devcrew/demo.py</code>, <code>devcrew/cli.py</code></td><td>—</td><td>Shared offline-model demo (event sink → console) and the <code>demo</code>/<code>trust</code> subcommands.</td></tr>
+    <tr><td><b>Control room</b></td><td><code>devcrew/ui/app.py</code> + <code>ui/static/index.html</code></td><td>original's Next.js office/board</td><td>FastAPI state endpoints, WebSocket event fan-out, worker-thread runs, light-theme SPA.</td></tr>
+    <tr><td><b>Test suite</b></td><td><code>tests/test_devcrew.py</code></td><td>—</td><td>32 offline tests: budget ×8, trust ×2, parsers ×6, repo ×6, pipeline e2e incl. rework, budget gate, merge-conflict follow-up.</td></tr>
+  </table>
+  </div>
+</div></section>
+
+<!-- ================= EXECUTION ================= -->
+<section id="execution"><div class="wrap">
+  <h2><span class="num">4</span>End-to-end execution</h2>
+  <p class="sub">What happens, in order, when a task is created and run with auto-merge — and exactly which code runs at each point.</p>
+
+  <div class="card">
+  <ol class="timeline">
+    <li><span class="dot d-sla">1</span><h4>Task lands on the board</h4>
+      <p><code>add_task(store, title, description, type, priority)</code> numbers it (<code>DC-1</code>) and files it in <strong>Todo</strong>. Nothing runs yet — a task is data, not intent.</p>
+      <div class="who"><span class="tag t-sla">factory.py › add_task</span><span class="tag t-ind">UI: POST /api/tasks</span></div></li>
+    <li><span class="dot d-ind">2</span><h4>Run starts with a budget pre-check</h4>
+      <p><code>start_task_run</code> creates the <code>TaskRun</code> (stage <code>analysis</code>, round 0), checks every team member's monthly balance (25¢ minimum) and emits <code>run_started</code>. In the UI this happens on a worker thread; the API returns immediately.</p>
+      <div class="who"><span class="tag t-ind">pipeline.py › start_task_run</span><span class="tag t-tea">budget.py › assert_can_run</span></div></li>
+    <li><span class="dot d-amb">3</span><h4>Analysis — the Analyst explores and plans</h4>
+      <p>A Deep Agent graph runs with the Analyst's verbatim instructions, read-only repo tools and <code>hand_in_analysis</code>. The structured result — problem, approach, files to change, risks — becomes <code>run.plan</code>. Without a valid plan the stage cannot complete.</p>
+      <div class="who"><span class="tag t-amb">agents.py › build_stage_agent("analysis")</span><span class="tag t-amb">tools.py › parse_analysis</span></div></li>
+    <li><span class="dot d-amb">4</span><h4>Development — branch, commits, submission requires real work</h4>
+      <p>The branch <code>feat/dc-1-&lt;slug&gt;</code> is created from the default branch (run-id suffix on collision). The Developer gets all five repo tools; each <code>write_file</code>/<code>delete_file</code> is one commit on the branch. The validator rejects <code>hand_in_work</code> until the branch is <strong>0 commits behind/ahead-clean</strong> — submitting with no commits raises <em>"You haven't committed any changes yet"</em> back into the agent loop.</p>
+      <div class="who"><span class="tag t-amb">pipeline.py › development validator</span><span class="tag t-tea">repo.py › compare_branches</span></div></li>
+    <li><span class="dot d-amb">5</span><h4>Review — approve, or send it back</h4>
+      <p>The Reviewer sees task + plan + diff and answers <code>approved</code> with a summary or <code>changes_requested</code> with required changes. A rejection increments <code>run.round</code> and returns the run to development. Round 3 fails the run: <em>"needs changes after 2 rounds"</em>.</p>
+      <div class="who"><span class="tag t-amb">tools.py › hand_in_review</span><span class="tag t-ros">MAX_REWORK_ROUNDS = 2</span></div></li>
+    <li><span class="dot d-ros">6</span><h4>Testing — the Tester verifies, then DevCrew double-checks</h4>
+      <p>The Tester submits a pass/fail with checks. Even on "pass", the pipeline overlays <strong>six mechanical branch checks</strong> — branch exists, separate from default, has commits, files changed, planned files touched, no protected files. DevCrew's checks overrule the Tester: a model saying "pass" cannot excuse a branch with no commits.</p>
+      <div class="who"><span class="tag t-ros">pipeline.py › branch_checks</span><span class="tag t-tea">repo.py › is_protected_path</span></div></li>
+    <li><span class="dot d-ind">7</span><h4>Pull request</h4>
+      <p>The diff is measured (files, +/− lines) and a <code>PullRequest</code> artifact is recorded: number, title <code>DC-1: …</code>, state <code>open</code>. In auto mode the run advances to <code>merge</code>; in manual mode it stops here — the card sits in <strong>Testing</strong> with run status <code>done</code> until a human merges and drags it.</p>
+      <div class="who"><span class="tag t-ind">pipeline.py › pull_request_stage</span></div></li>
+    <li><span class="dot d-ros">8</span><h4>Merge — or a filed follow-up</h4>
+      <p>Auto mode merges locally. On conflict the PR is marked blocked and the Tester files a follow-up task (<em>"Resolve merge conflicts for DC-1"</em>, high priority) in Todo. On success the card moves to <strong>Done</strong> and a <code>task_completed</code> ledger entry is written.</p>
+      <div class="who"><span class="tag t-ros">pipeline.py › merge_stage</span><span class="tag t-tea">repo.py › merge</span></div></li>
+    <li><span class="dot d-sla">9</span><h4>Every step is priced and recorded</h4>
+      <p>After each stage, <code>record_agent_spend</code> writes <code>ceil(cost)</code> cents against the acting agent's month, warning at 80% of cap. Stage starts, reviews, test runs, PRs and errors all append to <code>activity.jsonl</code>, and each transition is emitted to the WebSocket event sink for the UI feed.</p>
+      <div class="who"><span class="tag t-sla">state.py › save_ledger</span><span class="tag t-ind">ui/app.py › Broker.publish</span></div></li>
+  </ol>
+  </div>
+
+  <div class="callout"><b>Design principle</b>Submission is not completion. A model's claim of success is always validated mechanically — commits must exist, branches must be ahead, protected paths must be untouched — before the stage machine advances.</div>
+</div></section>
+
+<!-- ================= STAGES ================= -->
+<section id="stages"><div class="wrap">
+  <h2><span class="num">5</span>The six stages, one at a time</h2>
+  <p class="sub">Click a stage to see its agent, tools, the validator that decides pass/fail, and when it hard-fails.</p>
+
+  <div class="stepper">
+    <div class="steps" role="tablist" aria-label="Pipeline stages">
+      <button class="step" role="tab" aria-selected="true" data-p="p1"><span class="k">1</span><span><b>analysis</b><small>Analyst explores, submits a plan</small></span></button>
+      <button class="step" role="tab" aria-selected="false" data-p="p2"><span class="k">2</span><span><b>development</b><small>Developer commits on a feat branch</small></span></button>
+      <button class="step" role="tab" aria-selected="false" data-p="p3"><span class="k">3</span><span><b>review</b><small>Reviewer approves or requests changes</small></span></button>
+      <button class="step" role="tab" aria-selected="false" data-p="p4"><span class="k">4</span><span><b>testing</b><small>Tester verifies + 6 branch checks</small></span></button>
+      <button class="step" role="tab" aria-selected="false" data-p="p5"><span class="k">5</span><span><b>pull_request</b><small>PR artifact recorded</small></span></button>
+      <button class="step" role="tab" aria-selected="false" data-p="p6"><span class="k">6</span><span><b>merge</b><small>Auto-merge or human merge</small></span></button>
+    </div>
+
+    <div class="card">
+      <div class="panel on" id="p1">
+        <h3>① analysis</h3><span class="tag t-amb">agent stage</span><span class="tag t-sla">read-only tools</span>
+        <ul>
+          <li>Agent: <b>Analyst</b> — budget $50/mo, 20-turn cap. Instructions ported verbatim, ending in the shared guardrails.</li>
+          <li>Tools: <code>list_files</code>, <code>read_file</code>, <code>hand_in_analysis</code>.</li>
+          <li>Input: task title/description + the repo file tree; previous stage summaries on later rounds.</li>
+          <li><code>parse_analysis</code> requires problem, approach, a non-empty file list and risks — missing fields raise a tool error the agent must fix.</li>
+        </ul>
+        <dl class="kv"><dt>Produces</dt><dd><code>run.plan</code> (files, approach, risks) carried into development and review</dd>
+        <dt>Emits</dt><dd><code>stage</code>, <code>agent_start/end</code> events; <code>task_started</code> ledger entry; spend vs Analyst budget</dd>
+        <dt>Fails when</dt><dd>Model limit reached · monthly budget exhausted · no valid submission within turns</dd></dl>
+      </div>
+      <div class="panel" id="p2">
+        <h3>② development</h3><span class="tag t-amb">agent stage</span><span class="tag t-ros">writes to repo</span>
+        <ul>
+          <li>Agent: <b>Developer</b> — budget $200/mo, 60-turn cap (the highest; it does the real work).</li>
+          <li>Branch <code>feat/&lt;key&gt;-&lt;slug(title,40)&gt;</code> is created from the default branch before the agent starts; collision suffix = first 6 chars of the run id.</li>
+          <li>Tools: all five repo tools (<code>write_file</code>/<code>delete_file</code> commit automatically, one commit per call) + <code>hand_in_work</code>.</li>
+          <li>Validator: <code>compare_branches(base, branch).ahead_by == 0</code> is required — i.e. the branch must actually be <em>ahead</em>; submitting without commits raises back into the loop.</li>
+        </ul>
+        <dl class="kv"><dt>Produces</dt><dd>Commits on the run branch + a summary; the branch name recorded on the run</dd>
+        <dt>Emits</dt><dd><code>branch_created</code> event; spend vs Developer budget</dd>
+        <dt>Fails when</dt><dd>Protected path write · default-branch write · turn/budget limit · 3rd rework round</dd></dl>
+      </div>
+      <div class="panel" id="p3">
+        <h3>③ review</h3><span class="tag t-amb">agent stage</span><span class="tag t-ros">can trigger rework</span>
+        <ul>
+          <li>Agent: <b>Reviewer</b> — budget $80/mo, 20-turn cap; separate role instructions (code review, security, performance, accessibility).</li>
+          <li>Sees: task, the Analyst's plan, the full diff (<code>get_diff</code>) and the Developer's summary.</li>
+          <li><code>hand_in_review</code> parses <code>{approved, summary|changes_required}</code>; rejection records the required changes on the run.</li>
+          <li>Rejection path: <code>run.round += 1</code> → back to development with the critique injected into the next stage input. <code>round &gt;= MAX_REWORK_ROUNDS (2)</code> fails the run with <em>"needs changes after 2 rounds"</em>.</li>
+        </ul>
+        <dl class="kv"><dt>Produces</dt><dd>Approval (→ testing) or required-changes list (→ rework)</dd>
+        <dt>Emits</dt><dd><code>review</code> ledger entry; spend vs Reviewer budget</dd>
+        <dt>Fails when</dt><dd>Malformed submission · limit reached · rework exhausted</dd></dl>
+      </div>
+      <div class="panel" id="p4">
+        <h3>④ testing</h3><span class="tag t-amb">agent stage</span><span class="tag t-ros">mechanical overrule</span>
+        <ul>
+          <li>Agent: <b>Tester</b> — budget $100/mo, 15-turn cap; instructed on unit/e2e/regression testing and bug reporting.</li>
+          <li>Submits <code>{passed, summary}</code>; a fail routes to rework exactly like a rejection.</li>
+          <li>Then the pipeline runs <code>branch_checks()</code>: branch exists · separate from default · has commits · files changed · planned files touched · <strong>no protected files</strong>. A Tester "pass" with failing checks becomes a rework.</li>
+        </ul>
+        <dl class="kv"><dt>Produces</dt><dd>Verified branch + checks list shown in the UI feed</dd>
+        <dt>Emits</dt><dd><code>test_run</code> ledger entry; spend vs Tester budget</dd>
+        <dt>Fails when</dt><dd>Tester fails it · any of the 6 branch checks fail · limits hit</dd></dl>
+      </div>
+      <div class="panel" id="p5">
+        <h3>⑤ pull_request</h3><span class="tag t-ind">mechanical stage</span><span class="tag t-sla">no model call</span>
+        <ul>
+          <li>No agent: the pipeline diffs base vs branch and records the <code>PullRequest</code> (number, title, changed files, +/−).</li>
+          <li>Auto merge mode: run advances to <code>merge</code> immediately.</li>
+          <li>Manual merge mode: run finishes <code>done</code> here; the card stays in <strong>Testing</strong> until a human merges the branch and drags the card — faithful to the original.</li>
+        </ul>
+        <dl class="kv"><dt>Produces</dt><dd>PR artifact + <code>pr_opened</code> ledger entry</dd>
+        <dt>Emits</dt><dd><code>pr_opened</code> WebSocket event</dd>
+        <dt>Fails when</dt><dd>Diff unreadable / branch vanished (defensive <code>RepoError</code>)</dd></dl>
+      </div>
+      <div class="panel" id="p6">
+        <h3>⑥ merge</h3><span class="tag t-ind">mechanical stage</span><span class="tag t-ros">gated action</span>
+        <ul>
+          <li>Auto: <code>repo.merge(head)</code> (squash into default branch). Success → PR <code>merged</code>, card to <strong>Done</strong>, <code>task_completed</code> logged.</li>
+          <li>Conflict → PR marked blocked, and the Tester files a follow-up task in Todo describing the conflict; the run ends <code>failed</code> with the note.</li>
+          <li>Manual mode never reaches this stage — merging is a human action.</li>
+        </ul>
+        <dl class="kv"><dt>Produces</dt><dd>Merged default branch, or a filed conflict follow-up task</dd>
+        <dt>Emits</dt><dd><code>run_finished</code> (status done/failed) to WebSocket + ledger</dd>
+        <dt>Fails when</dt><dd>Merge conflict · repo error</dd></dl>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ================= GUARDRAILS ================= -->
+<section id="guardrails"><div class="wrap">
+  <h2><span class="num">6</span>Guard rails: budget, trust, rework</h2>
+  <p class="sub">Three independent mechanisms keep the agents inside the lines. Each is fail-closed: an exception means the stage — or the run — stops.</p>
+
+  <div class="grid g2">
+    <div class="card">
+      <h3 style="margin-top:0">The stage loop and rework gate</h3>
+      <div class="diagram" style="padding:0">
+      <svg viewBox="0 0 520 340" role="img" aria-label="Stage machine with rework loop" style="min-width:0">
+        <defs><marker id="g1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+        <rect class="node n-indigo" x="20" y="40" width="110" height="44" rx="10"/><text class="t-md" x="44" y="67">analysis</text>
+        <rect class="node n-indigo" x="170" y="40" width="130" height="44" rx="10"/><text class="t-md" x="192" y="67">development</text>
+        <rect class="node n-amber" x="340" y="40" width="100" height="44" rx="10"/><text class="t-md" x="366" y="67">review</text>
+        <rect class="node n-amber" x="340" y="150" width="100" height="44" rx="10"/><text class="t-md" x="362" y="177">testing</text>
+        <rect class="node n-teal" x="170" y="150" width="130" height="44" rx="10"/><text class="t-md" x="196" y="177">pull_request</text>
+        <rect class="node n-rose" x="20" y="150" width="110" height="44" rx="10"/><text class="t-md" x="52" y="177">merge</text>
+        <path class="edge" d="M130 62H170" marker-end="url(#g1)"/>
+        <path class="edge" d="M300 62H340" marker-end="url(#g1)"/>
+        <path class="edge" d="M390 84V150" marker-end="url(#g1)"/>
+        <path class="edge" d="M340 172H300" marker-end="url(#g1)"/>
+        <path class="edge" d="M170 172H130" marker-end="url(#g1)"/>
+        <!-- rework loop -->
+        <path class="edge amb" d="M440 62C480 62 480 230 235 230 200 230 235 230 235 230" marker-end="url(#g1)"/>
+        <path class="edge amb" d="M440 172C470 172 470 230 300 230" marker-end="url(#g1)"/>
+        <text class="t-sm" x="30" y="252">request changes / failed checks → run.round += 1 → back to development</text>
+        <text class="t-sm" x="30" y="270">round ≥ 2 → run fails: "needs changes after 2 rounds"</text>
+        <!-- budget gate -->
+        <rect class="node n-rose" x="170" y="282" width="220" height="52" rx="10"/>
+        <text class="t-md" x="188" y="304">BudgetMiddleware</text>
+        <text class="t-sm" x="188" y="324">check before every model call</text>
+        <path class="edge dash" d="M235 194V282" marker-end="url(#g1)"/>
+        <path class="edge dash" d="M390 194V308H390" marker-end="url(#g1)"/>
+      </svg>
+      </div>
+      <p class="sub" style="margin:8px 0 0">Review and testing can each send work back; the third strike ends the run. The budget check fires <em>before</em> every model invocation, not after the money is spent.</p>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">The six trust checks</h3>
+      <div class="gate">
+        <div class="chk"><span class="ic">1</span><div><b>Clear role and workflow · 20</b><span class="d">Instructions define the role and numbered steps; too short to steer an agent = fail.</span></div></div>
+        <div class="chk"><span class="ic">2</span><div><b>Prompt-injection guardrail · 20</b><span class="d">Repo content, issues and tool output are treated as data, never instructions. Absent = fail.</span></div></div>
+        <div class="chk"><span class="ic">3</span><div><b>Secrets protected · 15</b><span class="d">Never print/commit secrets, tokens or .env values. Absent = fail.</span></div></div>
+        <div class="chk"><span class="ic">4</span><div><b>Approval for high-impact tools · 20</b><span class="d">Shell / apply_patch / computer_use require human approval. Absent = warn.</span></div></div>
+        <div class="chk"><span class="ic">5</span><div><b>Budget cap · 10</b><span class="d">Monthly budget ≤ $1,000, else warn — a runaway loop must have a ceiling.</span></div></div>
+        <div class="chk"><span class="ic">6</span><div><b>Skills match the role · 15</b><span class="d">Attached skills overlap the role's defaults; none attached = fail.</span></div></div>
+      </div>
+      <p class="sub" style="margin:10px 0 0">Pass = full weight, warn = half, fail = 0. The default team scores <b>100/100</b>; <code>python -m devcrew.cli trust</code> re-runs the scan with findings.</p>
+    </div>
+  </div>
+
+  <div class="grid g3" style="margin-top:16px">
+    <div class="card"><span class="tag t-ros">Budget middleware</span><p style="margin:10px 0 0"><code>before_model</code> and <code>wrap_tool_call</code> call <code>assert_stage_budget</code>: spend is estimated from real OpenRouter usage metadata (via <code>CostTracker</code>) and recorded with <code>ceil(cost)</code> cents per stage. Cap reached → <code>BudgetExceeded</code>; 80% → <code>budget_warning</code> ledger entry.</p></div>
+    <div class="card"><span class="tag t-ros">Turn limits</span><p style="margin:10px 0 0"><code>ModelCallLimitMiddleware(run_limit=max_turns, exit_behavior="end")</code> ends the agent gracefully at its turn cap (Analyst 20 · Developer 60 · Reviewer 20 · Tester 15) instead of looping forever.</p></div>
+    <div class="card"><span class="tag t-ros">Single submission</span><p style="margin:10px 0 0">A <code>SubmissionBox</code> accepts exactly one outcome per stage; a second <code>hand_in()</code> raises <em>"You already submitted."</em> The agent loop only ends when the model stops calling tools — a <code>GraphInterrupt</code> raised inside a tool is swallowed by the runtime, so validation errors are returned as tool text instead.</p></div>
+  </div>
+
+  <div class="callout ok"><b>Why scripted offline mode matters</b><code>ScriptedChatModel</code> replays deterministic tool-call scripts through the exact same pipeline, middleware, validators and ledger. All 32 tests and the WS smoke test exercise the governance machinery with zero network and zero cost — the guards are testable without the model.</div>
+</div></section>
+
+<!-- ================= CONTROL ROOM ================= -->
+<section id="ui"><div class="wrap">
+  <h2><span class="num">7</span>The web control room</h2>
+  <p class="sub">A FastAPI + WebSocket replacement for the original's Next.js office/board views. One demo workspace, one run at a time, everything streamed live.</p>
+
+  <div class="grid g3">
+    <div class="card"><span class="tag t-ind">State</span><p style="margin:10px 0 0"><code>GET /api/state</code> returns the full snapshot: agents (trust score, monthly spend vs budget bar, status dot), tasks, runs, PRs and the 80-entry ledger tail. <code>POST /api/reset</code> recreates the demo workspace — sample-repo seeding is idempotent.</p></div>
+    <div class="card"><span class="tag t-tea">Actions</span><p style="margin:10px 0 0"><code>POST /api/tasks</code> creates a task; <code>POST /api/run {task_id, mode}</code> starts it on a worker thread (409 while busy, 400 for live without a key). The pipeline's <code>event_sink</code> is the broker's <code>publish()</code>, called thread-safely from the run thread.</p></div>
+    <div class="card"><span class="tag t-ros">Live feed</span><p style="margin:10px 0 0"><code>WS /ws</code> sends a snapshot on connect, then every event: <code>run_started</code>, <code>stage</code>, <code>agent_start/end</code>, <code>branch_created</code>, <code>stage_advanced</code>, <code>pr_opened</code>, <code>run_finished</code>. The SPA reconnects automatically.</p></div>
+  </div>
+
+  <div class="callout"><b>Windows note</b>Port 8000 is occupied on the author's machine, so the server runs on <code>8017</code> (<code>uvicorn devcrew.ui.app:app --port 8017</code>, or <code>cmd //c run-ui.bat</code> detached). Any free port works. Live mode needs <code>OPENROUTER_API_KEY</code> in <code>.env</code>; without it the UI shows live as unavailable and only offline runs.</div>
+</div></section>
+
+<!-- ================= START ================= -->
+<section id="start"><div class="wrap">
+  <h2><span class="num">8</span>How to run it</h2>
+  <p class="sub">Four ways to drive the factory. All of them work with no API key except live mode.</p>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-t="t1">Offline CLI demo</button>
+    <button class="tab" role="tab" aria-selected="false" data-t="t2">Web control room</button>
+    <button class="tab" role="tab" aria-selected="false" data-t="t3">Tests &amp; smoke</button>
+    <button class="tab" role="tab" aria-selected="false" data-t="t4">Live mode</button>
+  </div>
+
+  <div class="card">
+    <div class="tabpanel on" id="t1">
+      <ol class="ol">
+        <li><b>Install dependencies</b> (Python 3.12)
+          <div class="code"><div class="cap">bash<button class="copy">Copy</button></div><pre>pip install -r requirements.txt</pre></div></li>
+        <li><b>Run the deterministic demo</b> — full pipeline, scripted model, no network
+          <div class="code"><div class="cap">bash<button class="copy">Copy</button></div><pre>python -m devcrew.cli demo --mode offline</pre></div></li>
+        <li><b>Watch a merge-conflict follow-up</b> — manual merge mode stops at the PR
+          <div class="code"><div class="cap">bash<button class="copy">Copy</button></div><pre>python -m devcrew.cli demo --mode offline --merge-mode manual</pre></div></li>
+        <li><b>Run the trust scan</b> — six weighted checks per role
+          <div class="code"><div class="cap">bash<button class="copy">Copy</button></div><pre>python -m devcrew.cli trust</pre></div></li>
+      </ol>
+    </div>
+    <div class="tabpanel" id="t2">
+      <p style="margin-top:0">Start the server (detached on Windows via the wrapper), then open the page and press <em>Create task &amp; run</em>:</p>
+      <div class="code"><div class="cap">bash<button class="copy">Copy</button></div><pre>uvicorn devcrew.ui.app:app --port 8017
+<span class="c-cm"># Windows detached:  cmd //c run-ui.bat</span>
+<span class="c-cm"># then browse http://127.0.0.1:8017</span></pre></div>
+      <p>The workspace persists at <code>.ui-workspace/</code> (git repo + <code>activity.jsonl</code>); <em>Reset</em> recreates it. One run at a time — a second <code>/api/run</code> while busy returns 409.</p>
+    </div>
+    <div class="tabpanel" id="t3">
+      <p style="margin-top:0">The offline gate — 32 tests, no network — plus the headless UI check (server must be up):</p>
+      <div class="code"><div class="cap">bash<button class="copy">Copy</button></div><pre>python -m tests.test_devcrew   <span class="c-cm"># must print 32/32 green</span>
+python ws_smoke.py            <span class="c-cm"># reset → task → run → WS events → assert merged</span></pre></div>
+      <p><code>ws_smoke.py</code> connects to <code>ws://127.0.0.1:8017/ws</code>, creates a task, starts an offline run and collects events until <code>run_finished</code>, then asserts the PR is merged and the task is in done.</p>
+    </div>
+    <div class="tabpanel" id="t4">
+      <p style="margin-top:0">Add a key, then the same pipeline runs on real models:</p>
+      <div class="code"><div class="cap">bash<button class="copy">Copy</button></div><pre>cp .env.example .env   <span class="c-cm"># then set OPENROUTER_API_KEY</span>
+python -m devcrew.cli demo --mode live --task "Add a delete_task function"
+python examples/run_task.py "Your task"          <span class="c-cm"># minimal live example</span>
+uvicorn devcrew.ui.app:app --port 8017           <span class="c-cm"># UI with live mode enabled</span></pre></div>
+      <div class="callout bad" style="margin-bottom:0"><b>Costs are real</b>Live mode makes paid OpenRouter calls with per-agent monthly caps as the only ceiling. Start with the smallest task you can write.</div>
+    </div>
+  </div>
+
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card"><h3 style="margin-top:0">Project layout</h3>
+      <div class="code"><div class="cap">tree<button class="copy">Copy</button></div><pre>devcrew-python/
+├── devcrew/            <span class="c-cm"># the package (table in §3)</span>
+│   ├── ui/app.py       <span class="c-cm"># FastAPI + WebSocket control room</span>
+│   └── ui/static/index.html
+├── tests/test_devcrew.py
+├── examples/run_task.py
+├── ws_smoke.py
+├── README.md · POC.md · requirements.txt
+└── _source_ref/        <span class="c-cm"># original TypeScript for cross-checking</span></pre></div></div>
+    <div class="card"><h3 style="margin-top:0">Gotchas</h3>
+      <ul style="margin:0;padding-left:18px">
+        <li>Use the full Python path on this machine (<code>C:\…\Python312\python.exe</code>); bare <code>python</code> is not on Git Bash's PATH.</li>
+        <li>Scripts reconfigure stdout to UTF-8 — keep <code>sys.stdout.reconfigure(encoding="utf-8")</code> when adding new entry points.</li>
+        <li>Live mode fails fast without <code>OPENROUTER_API_KEY</code> — by design, there is no silent fallback to a fake model.</li>
+        <li>Git for Windows prints "nothing to commit" on stdout; reseeding checks the staged-diff exit code instead of message sniffing.</li>
+      </ul></div>
+  </div>
+</div></section>
+
+<!-- ================= RESPONSE ================= -->
+<section id="response"><div class="wrap">
+  <h2><span class="num">9</span>What the system answers with</h2>
+  <p class="sub">Real output from this repository: the CLI demo transcript, the WebSocket event stream, and the state snapshot the UI renders. These are copied from actual runs, not illustrations.</p>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-t="r1">CLI transcript</button>
+    <button class="tab" role="tab" aria-selected="false" data-t="r2">WebSocket event stream</button>
+    <button class="tab" role="tab" aria-selected="false" data-t="r3">State snapshot (JSON)</button>
+  </div>
+
+  <div class="card">
+    <div class="tabpanel on" id="r1">
+      <p style="margin-top:0"><code>python -m devcrew.cli demo --mode offline</code> — abridged:</p>
+      <div class="code"><div class="cap">console<button class="copy">Copy</button></div><pre>DevCrew Python -- step-by-step pipeline demo
+mode=offline  merge_mode=auto
+
+-- AI team (with built-in trust scores) --
+  Analyst    budget $ 50.00/mo  max_turns=20  trust=100/100
+  Developer  budget $ 200.00/mo  max_turns=60  trust=100/100
+  Reviewer   budget $ 80.00/mo  max_turns=20  trust=100/100
+  Tester     budget $ 100.00/mo  max_turns=15  trust=100/100
+
+=== [Analyzing] ===
+  &gt; Analyst starts (20 turns budget)
+  &gt; Analyst done: 4 model calls, ~$0.04 this stage
+  &gt; branch created: feat/dc-1-add-a-delete-task-function-to-the-task-s
+
+=== [Developing] on feat/dc-1-add-a-delete-task-function-to-the-task-s ===
+  &gt; Developer starts (60 turns budget)
+  &gt; Developer done: 4 model calls, ~$0.04 this stage
+
+=== [Reviewing] ===
+  &gt; Reviewer done: 3 model calls, ~$0.03 this stage
+
+=== [Verifying] ===
+  &gt; Tester done: 3 model calls, ~$0.03 this stage
+
+=== [Opening pull request] ===
+  &gt; PR #1 opened: DC-1: Add a delete_task function to the task store
+
+=== [Merging] ===
+
+*** RUN DONE
+run status : done  (branch: feat/dc-1-…)
+PR         : #1 DC-1: Add a delete_task function… [merged] (+5/-0, 1 files)
+
+-- Agent activity ledger --
+  [16:09:43] joined          Analyst joined the team
+  [16:09:44] task_started    Analyst started DC-1
+  [16:09:44] task_completed  Analyst submitted a plan for DC-1
+  …            review        Reviewer approved DC-1
+  …            test_run      Verified DC-1 · All 6 branch checks pass.
+  …            pr_opened     Opened PR #1: DC-1 …
+  …            task_completed Merged #1 DC-1 …</pre></div>
+    </div>
+    <div class="tabpanel" id="r2">
+      <p style="margin-top:0"><code>python ws_smoke.py</code> against the running server — the exact event sequence for one offline run, in arrival order:</p>
+      <div class="code"><div class="cap">websocket · /ws<button class="copy">Copy</button></div><pre>state            ← snapshot on connect
+state            ← after POST /api/reset
+run_started
+stage            analysis
+agent_start      analysis
+agent_end        analysis
+branch_created
+stage_advanced development
+stage            development
+agent_start      development
+agent_end        development
+stage_advanced review
+stage            review
+agent_start      review
+agent_end        review
+stage_advanced testing
+stage            testing
+agent_start      testing
+agent_end        testing
+stage_advanced pull_request
+stage            pull_request
+pr_opened
+stage            merge
+run_finished     status=done
+
+<span class="c-cm"># final assertions in ws_smoke.py:</span>
+<span class="c-cm">#   run.status == done · PR merged · task status=done · paid ledger entries &gt; 0</span></pre></div>
+      <p class="sub" style="margin:0">The same events power the control room: stage chips light in role colours, the feed prints one line per event, and the board card moves Todo → In development → In review → Testing → Done.</p>
+    </div>
+    <div class="tabpanel" id="r3">
+      <p style="margin-top:0"><code>GET /api/state</code> after the smoke run (trimmed):</p>
+      <div class="code"><div class="cap">json<button class="copy">Copy</button></div><pre>{
+  "merge_mode": "auto",
+  "live_available": false,
+  "running": false,
+  "agents": [
+    {"name": "Analyst",   "trust_score": 100, "budget_cents": 5000,
+     "spent_cents": 4,  "status": "idle"},
+    {"name": "Developer", "trust_score": 100, "budget_cents": 20000, …},
+    {"name": "Reviewer",  "trust_score": 100, "budget_cents": 8000,  …},
+    {"name": "Tester",    "trust_score": 100, "budget_cents": 10000, …}
+  ],
+  "tasks":    [{"key": "DC-1", "title": "Add a README badge section",
+                "status": "done", "run_status": "done", "assignee": null}],
+  "runs":     [{"status": "done", "stage": "merge",
+                "branch": "feat/dc-1-add-a-readme-badge-section-0d5f21",
+                "round": 0, "error": null}],
+  "pull_requests": [{"number": 1, "state": "merged",
+                     "changed_files": 1, "additions": 5, "deletions": 0}],
+  "ledger":   [ … "kind": "test_run", "detail": "All 6 branch checks pass.",
+                "cost_cents": 3, "agent": "Tester" … ]
+}</pre></div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ================= FAILURE ================= -->
+<section id="failure"><div class="wrap">
+  <h2><span class="num">10</span>Failure modes &amp; guard rails</h2>
+  <p class="sub">The design principle: submission is not completion, and absence of evidence is never approval.</p>
+  <div class="card scroll">
+  <table class="tbl">
+    <tr><th>Situation</th><th>Stopped by</th><th>What you see</th></tr>
+    <tr><td>Live mode without <code>OPENROUTER_API_KEY</code></td><td><code>openrouter_configured()</code> guard; UI returns 400</td><td>CLI refuses; UI shows "live unavailable"</td></tr>
+    <tr><td>Agent tries to spend past its month</td><td><code>BudgetMiddleware → assert_stage_budget</code></td><td><code>budget_reached</code> ledger entry; stage/run fails</td></tr>
+    <tr><td>80% of monthly budget used</td><td><code>record_agent_spend</code> warning threshold</td><td><code>budget_warning</code> entry; agent continues</td></tr>
+    <tr><td>Write to <code>main</code>, <code>.env</code> or <code>.github/workflows</code></td><td><code>LocalRepo.write_file</code> path rules; branch check 6</td><td>Tool error back to the agent; rework if it slips through</td></tr>
+    <tr><td>Developer submits with no commits</td><td>Development validator (<code>ahead_by == 0</code>)</td><td>"You haven't committed any changes yet…" in the loop</td></tr>
+    <tr><td>Reviewer keeps rejecting</td><td><code>MAX_REWORK_ROUNDS = 2</code></td><td>Run fails: "needs changes after 2 rounds"</td></tr>
+    <tr><td>Tester says "pass" but branch has no commits / touches protected files</td><td><code>branch_checks()</code> overrule</td><td>Test fail → rework, regardless of the model's verdict</td></tr>
+    <tr><td>Second <code>hand_in()</code> in one stage</td><td><code>SubmissionBox</code> single-shot</td><td>"You already submitted."</td></tr>
+    <tr><td>Merge conflict at the end</td><td><code>repo.merge</code> raises <code>RepoError</code></td><td>PR blocked + follow-up task filed in Todo; run failed</td></tr>
+    <tr><td>Two runs at once in the UI</td><td><code>UISession</code> lock + running flag</td><td>HTTP 409 on <code>POST /api/run</code></td></tr>
+    <tr><td>Weak agent configuration</td><td><code>run_trust_checks</code> (6 weighted checks)</td><td>Trust score &lt; 100 with named findings in <code>devcrew trust</code></td></tr>
+  </table>
+  </div>
+  <div class="callout bad"><b>Still unverified</b>A live end-to-end paid run has not been executed in this environment (no <code>OPENROUTER_API_KEY</code> set). Everything above is exercised by the 32 offline tests, the CLI demo and the WS smoke test; live mode is guarded, wired and awaiting a key.</div>
+</div></section>
+
+<footer><div class="wrap">Generated from the repository source · <code>devcrew/pipeline.py</code>, <code>devcrew/agents.py</code>, <code>devcrew/tools.py</code>, <code>devcrew/budget.py</code>, <code>devcrew/trust.py</code>, <code>devcrew/repo.py</code>, <code>devcrew/ui/app.py</code> · ported from <code>devcrew-yt-project</code> (lib/task-runs.ts &amp; friends)</div></footer>
+
+<script>
+(function(){
+  // theme toggle
+  var root=document.documentElement, btn=document.getElementById('themeBtn');
+  btn.addEventListener('click',function(){
+    var dark=window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var cur=root.getAttribute('data-theme')||(dark?'dark':'light');
+    root.setAttribute('data-theme',cur==='dark'?'light':'dark');
+  });
+  // pipeline stepper
+  document.querySelectorAll('.step').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('.step').forEach(function(x){x.setAttribute('aria-selected','false')});
+      document.querySelectorAll('.panel').forEach(function(x){x.classList.remove('on')});
+      b.setAttribute('aria-selected','true');
+      document.getElementById(b.dataset.p).classList.add('on');
+    });
+  });
+  // tabs (start + response sections share the class; scope by closest section)
+  document.querySelectorAll('.tab').forEach(function(b){
+    b.addEventListener('click',function(){
+      var scope=b.closest('section');
+      scope.querySelectorAll('.tab').forEach(function(x){x.setAttribute('aria-selected','false')});
+      scope.querySelectorAll('.tabpanel').forEach(function(x){x.classList.remove('on')});
+      b.setAttribute('aria-selected','true');
+      scope.querySelector('#'+b.dataset.t).classList.add('on');
+    });
+  });
+  // copy buttons
+  document.querySelectorAll('.copy').forEach(function(b){
+    b.addEventListener('click',function(){
+      var text=b.closest('.code').querySelector('pre').innerText;
+      var done=function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1400)};
+      if(navigator.clipboard){navigator.clipboard.writeText(text).then(done,function(){})}
+    });
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DevCrew Python - Control Room</title>
+<style>
+  :root {
+    --bg: #f4f7fc;
+    --card: #ffffff;
+    --ink: #1b2740;
+    --muted: #64748b;
+    --line: #e3e9f4;
+    --analyst: #7c5cff;
+    --developer: #2563eb;
+    --reviewer: #d97706;
+    --tester: #059669;
+    --danger: #dc2626;
+    --radius: 14px;
+    --shadow: 0 1px 3px rgba(15, 27, 45, .08);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 14px/1.45 -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  header {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 14px 22px; background: var(--card); border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 5;
+  }
+  .logo {
+    font-weight: 800; font-size: 18px; letter-spacing: .2px;
+    background: linear-gradient(90deg, var(--analyst), var(--developer));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #eef3fb; border: 1px solid var(--line); color: var(--muted);
+    border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 600;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .dot.on { background: #16a34a; box-shadow: 0 0 0 3px rgba(22, 163, 74, .18); }
+  .dot.off { background: #cbd5e1; }
+  .dot.working { background: #2563eb; animation: pulse 1s infinite alternate; }
+  @keyframes pulse { from { opacity: .45; } to { opacity: 1; } }
+  main { display: grid; grid-template-columns: 300px 1fr; gap: 16px; padding: 16px 22px; max-width: 1500px; margin: 0 auto; }
+  .col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px 16px; }
+  .card h2 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); }
+  button {
+    font: inherit; font-weight: 650; border: 0; border-radius: 9px; cursor: pointer;
+    padding: 7px 13px; color: #fff; background: var(--developer);
+  }
+  button.ghost { background: #eef3fb; color: var(--ink); border: 1px solid var(--line); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button.danger { background: var(--danger); }
+  input, select, textarea {
+    font: inherit; width: 100%; border: 1px solid var(--line); border-radius: 9px;
+    padding: 7px 10px; background: #fbfdff; color: var(--ink);
+  }
+  textarea { resize: vertical; min-height: 52px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 8px 0 3px; font-weight: 600; }
+  .row { display: flex; gap: 8px; } .row > * { flex: 1; }
+  /* team */
+  .agent { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+  .agent:last-child { border-bottom: 0; }
+  .avatar { width: 34px; height: 34px; border-radius: 10px; color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; flex: none; }
+  .agent .meta { flex: 1; min-width: 0; }
+  .agent .name { font-weight: 700; }
+  .agent .sub { font-size: 11.5px; color: var(--muted); }
+  .bar { height: 5px; border-radius: 4px; background: #edf1f8; margin-top: 4px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; border-radius: 4px; }
+  /* pipeline */
+  .pipeline { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 6px 0 4px; }
+  .stage { padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; background: #eef3fb; color: var(--muted); border: 1.5px solid transparent; }
+  .stage.active { color: #fff; }
+  .stage.done { background: #e7f6ee; color: #047857; border-color: #bfe8d2; }
+  .arrow { color: #b6c2d6; font-weight: 700; }
+  .branch-chip { font-family: ui-monospace, Consolas, monospace; font-size: 12px; background: #f1f5ff; border: 1px solid var(--line); border-radius: 8px; padding: 3px 8px; word-break: break-all; }
+  /* tasks */
+  .task { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; background: #fcfdff; }
+  .task .t { font-weight: 700; }
+  .task .meta { font-size: 12px; color: var(--muted); margin: 3px 0 8px; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 1px 7px; margin-right: 5px; }
+  .tag.feature { background: #e0eaff; color: #2456c8; }
+  .tag.bug { background: #ffe4e0; color: #c2372f; }
+  .tag.issue { background: #efe7ff; color: #6a3fd8; }
+  .status { font-size: 11px; font-weight: 700; color: var(--muted); }
+  /* feed + ledger */
+  #feed {
+    font-family: ui-monospace, Consolas, monospace; font-size: 12px;
+    background: #0f1b2d; color: #d7e3f7; border-radius: 10px; padding: 10px 12px;
+    height: 240px; overflow-y: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  #feed .stage-line { color: #8fd0ff; font-weight: 700; }
+  #feed .done-line { color: #7ee2b0; font-weight: 700; }
+  #feed .err-line { color: #ff9d9d; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th { text-align: left; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; padding: 4px 8px; border-bottom: 1px solid var(--line); }
+  td { padding: 5px 8px; border-bottom: 1px solid #f0f4fa; vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  .kind { font-weight: 700; color: var(--developer); white-space: nowrap; }
+  .cost { color: var(--muted); white-space: nowrap; }
+  .empty { color: var(--muted); font-size: 12.5px; padding: 6px 0; }
+  .error-banner { background: #fdecec; border: 1px solid #f5c1c1; color: #a12622; border-radius: 10px; padding: 8px 12px; font-size: 13px; margin-bottom: 12px; display: none; }
+  @media (max-width: 980px) { main { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="logo">DevCrew Python</span>
+  <span class="chip" id="conn-chip"><span class="dot off" id="conn-dot"></span><span id="conn-label">connecting</span></span>
+  <span class="chip">merge: <b id="merge-mode" style="margin-left:4px">auto</b></span>
+  <span class="chip" id="live-chip">live LLM: <b id="live-label" style="margin-left:4px">checking</b></span>
+  <span style="flex:1"></span>
+  <button class="ghost" id="reset-btn" title="Recreate the demo workspace">Reset workspace</button>
+</header>
+
+<main>
+  <!-- left column -->
+  <div class="col">
+    <section class="card">
+      <h2>AI Team</h2>
+      <div id="agents"></div>
+    </section>
+    <section class="card">
+      <h2>New task</h2>
+      <div class="error-banner" id="form-error"></div>
+      <label>Title</label>
+      <input id="task-title" value="Add a delete_task function to the task store">
+      <label>Description</label>
+      <textarea id="task-desc">Users want to remove tasks they added by mistake.</textarea>
+      <div class="row">
+        <div><label>Type</label>
+          <select id="task-type"><option>feature</option><option>bug</option><option>issue</option></select></div>
+        <div><label>Priority</label>
+          <select id="task-priority"><option>medium</option><option>low</option><option>high</option><option>urgent</option></select></div>
+      </div>
+      <label>Run mode</label>
+      <select id="run-mode"><option value="offline">offline (scripted, free)</option><option value="live">live (OpenRouter claude-sonnet-5.5)</option></select>
+      <div style="margin-top:10px"><button id="create-run-btn">Create task &amp; run</button></div>
+    </section>
+  </div>
+
+  <!-- right column -->
+  <div class="col">
+    <section class="card">
+      <h2>Pipeline</h2>
+      <div class="pipeline" id="pipeline"></div>
+      <div style="margin-top:8px">branch: <span class="branch-chip" id="branch">-</span>
+        <span class="status" id="round" style="margin-left:8px"></span></div>
+    </section>
+
+    <section class="card">
+      <h2>Board</h2>
+      <div id="tasks"><div class="empty">No tasks yet - create one on the left.</div></div>
+    </section>
+
+    <section class="card">
+      <h2>Pull requests</h2>
+      <div id="prs"><div class="empty">No pull requests yet.</div></div>
+    </section>
+
+    <div class="col" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <section class="card">
+        <h2>Live event feed</h2>
+        <div id="feed"></div>
+      </section>
+      <section class="card">
+        <h2>Activity ledger</h2>
+        <div style="max-height:286px;overflow-y:auto">
+        <table><thead><tr><th>Time</th><th>Agent</th><th>Event</th><th>Cost</th></tr></thead>
+        <tbody id="ledger"></tbody></table>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script>
+const ROLE_COLORS = { analyst: "var(--analyst)", developer: "var(--developer)", reviewer: "var(--reviewer)", tester: "var(--tester)" };
+const STAGES = ["analysis", "development", "review", "testing", "pull_request", "merge"];
+const STAGE_LABELS = { analysis: "Analyzing", development: "Developing", review: "Reviewing", testing: "Verifying", pull_request: "Opening PR", merge: "Merging" };
+let state = null;
+
+const $ = (id) => document.getElementById(id);
+const fmtCents = (c) => "$" + (c / 100).toFixed(2);
+const fmtTime = (iso) => new Date(iso).toLocaleTimeString();
+
+function feedLine(text, cls) {
+  const feed = $("feed");
+  const div = document.createElement("div");
+  if (cls) div.className = cls;
+  div.textContent = text;
+  feed.appendChild(div);
+  feed.scrollTop = feed.scrollHeight;
+}
+
+function render() {
+  if (!state) return;
+  $("merge-mode").textContent = state.merge_mode;
+  $("live-label").textContent = state.live_available ? "available" : "no key";
+  // team
+  $("agents").innerHTML = state.agents.map(a => {
+    const pct = Math.min(100, Math.round(a.spent_cents / a.budget_cents * 100));
+    const dotClass = a.status === "working" ? "working" : (a.status === "idle" ? "on" : "off");
+    const statusLabel = { working: "Working", idle: "Idle", paused: "Paused", over_budget: "Budget reached" }[a.status] || a.status;
+    return `<div class="agent">
+      <div class="avatar" style="background:${ROLE_COLORS[a.role]}">${a.name[0]}</div>
+      <div class="meta">
+        <div class="name">${a.name} <span class="sub">- ${statusLabel}</span> <span class="dot ${dotClass}" style="float:right;margin-top:5px"></span></div>
+        <div class="sub">trust ${a.trust_score}/100 - ${fmtCents(a.spent_cents)} of ${fmtCents(a.budget_cents)} this month - ${a.max_turns} turns</div>
+        <div class="bar"><i style="width:${pct}%;background:${pct > 90 ? "var(--danger)" : ROLE_COLORS[a.role]}"></i></div>
+      </div></div>`;
+  }).join("");
+  // pipeline
+  const running = state.runs.find(r => r.status === "running");
+  const lastDone = [...state.runs].reverse().find(r => r.status !== "running");
+  const activeIdx = running ? STAGES.indexOf(running.stage) : -1;
+  const doneIdx = (!running && lastDone) ? 5 : -1;
+  $("pipeline").innerHTML = STAGES.map((s, i) => {
+    const role = { analysis: "analyst", development: "developer", review: "reviewer", testing: "tester", pull_request: "tester", merge: "tester" }[s];
+    let cls = "stage", style = "";
+    if (running && i === activeIdx) { cls += " active"; style = `background:${ROLE_COLORS[role]}`; }
+    else if (running && i < activeIdx) cls += " done";
+    else if (!running && lastDone && i <= doneIdx && lastDone.status === "done") cls += " done";
+    return (i ? `<span class="arrow">-&gt;</span>` : "") + `<span class="${cls}" style="${style}">${STAGE_LABELS[s]}</span>`;
+  }).join("");
+  $("branch").textContent = (running && running.branch) || (lastDone && lastDone.branch) || "-";
+  $("round").textContent = running && running.round ? `rework round ${running.round}/2` : "";
+  // tasks
+  $("tasks").innerHTML = state.tasks.length ? state.tasks.map(t => `
+    <div class="task">
+      <span class="tag ${t.type}">${t.type}</span><span class="t">${t.key}: ${t.title}</span>
+      <div class="meta">column: ${t.status}${t.assignee ? " - assignee: " + t.assignee : ""}${t.run_status ? " - run: " + t.run_status : ""}</div>
+      <button class="ghost run-btn" data-id="${t.id}" ${state.running ? "disabled" : ""}>Run</button>
+    </div>`).join("") : `<div class="empty">No tasks yet - create one on the left.</div>`;
+  document.querySelectorAll(".run-btn").forEach(b => b.onclick = () => runTask(b.dataset.id));
+  // prs
+  $("prs").innerHTML = state.pull_requests.length ? state.pull_requests.map(p => `
+    <div class="task"><span class="t">#${p.number} ${p.title}</span>
+    <div class="meta">[${p.state}] ${p.head_branch} - ${p.changed_files} files, +${p.additions}/-${p.deletions}</div></div>`).join("")
+    : `<div class="empty">No pull requests yet.</div>`;
+  // ledger
+  $("ledger").innerHTML = [...state.ledger].reverse().map(e => `
+    <tr><td>${fmtTime(e.at)}</td><td>${e.agent || "-"}</td>
+    <td><span class="kind">${e.kind}</span> ${e.title}</td>
+    <td class="cost">${e.cost_cents ? "~" + fmtCents(e.cost_cents) : ""}</td></tr>`).join("");
+  $("create-run-btn").disabled = !!state.running;
+}
+
+async function refresh() {
+  const res = await fetch("/api/state");
+  state = await res.json();
+  render();
+}
+
+async function createTask() {
+  const body = {
+    title: $("task-title").value.trim() || "Untitled task",
+    description: $("task-desc").value,
+    type: $("task-type").value,
+    priority: $("task-priority").value,
+  };
+  const res = await fetch("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  return (await res.json()).id;
+}
+
+async function runTask(taskId) {
+  $("form-error").style.display = "none";
+  const mode = $("run-mode").value;
+  const res = await fetch("/api/run", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ task_id: taskId, mode }) });
+  if (!res.ok) {
+    const err = (await res.json()).error || "Run refused.";
+    $("form-error").textContent = err;
+    $("form-error").style.display = "block";
+  }
+  await refresh();
+}
+
+$("create-run-btn").onclick = async () => { const id = await createTask(); await runTask(id); };
+$("reset-btn").onclick = async () => { await fetch("/api/reset", { method: "POST" }); $("feed").innerHTML = ""; await refresh(); };
+
+// --- WebSocket -----------------------------------------------------------------
+function connect() {
+  const proto = location.protocol === "https:" ? "wss" : "ws";
+  const ws = new WebSocket(`${proto}://${location.host}/ws`);
+  ws.onopen = () => { $("conn-dot").className = "dot on"; $("conn-label").textContent = "live"; };
+  ws.onclose = () => { $("conn-dot").className = "dot off"; $("conn-label").textContent = "reconnecting"; setTimeout(connect, 1500); };
+  ws.onmessage = (m) => {
+    const event = JSON.parse(m.data);
+    if (event.type === "state") { state = event.snapshot; render(); return; }
+    if (event.type === "stage") feedLine(`\n[${event.label}]` + (event.branch ? ` on ${event.branch}` : "") + (event.round ? ` (round ${event.round})` : ""), "stage-line");
+    else if (event.type === "agent_start") feedLine(`  > ${event.agent} starts (${event.turns_budget} turns budget)`);
+    else if (event.type === "agent_end") feedLine(`  > ${event.agent} done: ${event.model_calls} model calls`);
+    else if (event.type === "branch_created") feedLine(`  > branch created: ${event.branch}`);
+    else if (event.type === "pr_opened") feedLine(`  > PR #${event.number} opened: ${event.title}`);
+    else if (event.type === "run_started") feedLine(`\nRun started for ${event.task_key}`, "stage-line");
+    else if (event.type === "run_finished") feedLine(`RUN ${event.status.toUpperCase()}${event.note ? " - " + event.note : ""}`, event.status === "failed" ? "err-line" : "done-line");
+    else if (event.type === "stage_advanced") feedLine(`  > handed to ${event.agent}`);
+  };
+}
+connect();
+refresh();
+</script>
+</body>
+</html>
